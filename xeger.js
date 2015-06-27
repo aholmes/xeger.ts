@@ -21,51 +21,41 @@ var Xeger = (function () {
     };
     Xeger.prototype.addOptions = function (options) {
         options = options || {};
-        if (options.multiple && options.optional) {
-            this.add('*');
-        }
-        else if (options.multiple) {
-            this.add('+');
-        }
-        else if (options.optional) {
-            this.add('?');
-        }
-        else if (typeof options.repeat === 'number') {
-            this.add('{' + options.repeat + '}');
-        }
-        else if (typeof options.from === 'number' || typeof options.to === 'number') {
-            this.add('{');
-            if (typeof options.from === 'number') {
-                this.add(options.from.toString());
-            }
-            this.add(',');
-            if (typeof options.to === 'number') {
-                this.add(options.to.toString());
-            }
-            this.add('}');
+        switch (true) {
+            case options.multiple && options.optional:
+                this.add('*');
+                break;
+            case options.multiple:
+                this.add('+');
+                break;
+            case options.optional:
+                this.add('?');
+                break;
+            case typeof options.repeat === 'number':
+                this.add('{' + options.repeat + '}');
+                break;
+            case typeof options.from === 'number' || typeof options.to === 'number':
+                var from = typeof options.from === 'number' && options.from || '';
+                var to = typeof options.to === 'number' && options.to || '';
+                this.add("{" + from + "," + to + "}");
+                break;
         }
     };
     Xeger.prototype.escape = function (str) {
-        return str.split('').map(function (char) {
-            if (/\w/.test(char)) {
-                return char;
-            }
-            else {
-                return '\\' + char;
-            }
-        }).join('');
+        var result = '';
+        for (var _i = 0; _i < str.length; _i++) {
+            var char = str[_i];
+            result += /\w/.test(char) ? char : ('\\' + char);
+        }
+        return result;
     };
     Xeger.prototype.literal = function (str, options) {
         var hasOptions = typeof options === 'object' &&
             Object.keys(options).length > 0 &&
             str.length > 1;
-        if (hasOptions) {
-            this.add('(?:');
-        }
-        this.add(this.escape(str));
-        if (hasOptions) {
-            this.add(')');
-        }
+        this.add(hasOptions
+            ? ('(?:' + this.escape(str) + ')')
+            : this.escape(str));
         this.addOptions(options);
         return this;
     };
@@ -102,25 +92,25 @@ var Xeger = (function () {
         return this;
     };
     Xeger.prototype.any = function (str, options) {
-        if (typeof str === 'string') {
-            this.add('[' + this.escape(str) + ']');
-        }
-        else if (typeof str === 'function') {
-            var cb = str;
-            this.add('[');
-            cb.call(this, this);
-            this.add(']');
-        }
-        else {
-            options = str;
-            this.add('.');
+        switch (true) {
+            case typeof str === 'string':
+                this.add('[' + this.escape(str) + ']');
+                break;
+            case typeof str === 'function':
+                this.add('[');
+                str.call(this, this);
+                this.add(']');
+                break;
+            default:
+                options = str;
+                this.add('.');
         }
         this.addOptions(options);
         return this;
     };
     Xeger.prototype.not = function (str, options) {
         if (typeof str === 'string') {
-            this.add('[^' + this.escape(str) + ']');
+            this.add("[^" + this.escape(str) + "]");
         }
         else if (typeof str === 'function') {
             var cb = str;

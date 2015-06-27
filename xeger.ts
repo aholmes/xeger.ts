@@ -24,7 +24,7 @@ class Xeger
 	public regexStr = '';
 	public flags = '';
 
-	constructor(cb: (xeger: Xeger) => void, options?: ConstructorOptions)
+	constructor(cb?: (xeger: Xeger) => void, options?: ConstructorOptions)
 	{
 		options = options || {};
 
@@ -51,80 +51,61 @@ class Xeger
 		this.regexStr += str;
 	}
 
-	private addOptions(options: RuleOptions)
+	private addOptions(options?: RuleOptions)
 	{
 		options = options || {};
 
-		if (options.multiple && options.optional)
+		switch (true)
 		{
-			this.add('*');
-		}
-		else if (options.multiple)
-		{
-			this.add('+');
-		}
-		else if (options.optional)
-		{
-			this.add('?');
-		}
-		else if (typeof options.repeat === 'number')
-		{
-			this.add('{' + options.repeat + '}');
-		}
-		else if (typeof options.from === 'number' || typeof options.to === 'number')
-		{
-			this.add('{');
-			if (typeof options.from === 'number')
-			{
-				this.add(options.from.toString());
-			}
-			this.add(',');
-			if (typeof options.to === 'number')
-			{
-				this.add(options.to.toString());
-			}
-			this.add('}');
+			case options.multiple && options.optional:
+				this.add('*');
+			break;
+			case options.multiple:
+				this.add('+');
+			break;
+			case options.optional:
+				this.add('?');
+			break;
+			case typeof options.repeat === 'number':
+				this.add('{' + options.repeat + '}');
+			break;
+			case typeof options.from === 'number' || typeof options.to === 'number':
+				var from = typeof options.from === 'number' && options.from || '';
+				var to   = typeof options.to   === 'number' && options.to   || '';
+				this.add(`{${from},${to}}`);
+			break;
 		}
 	}
 
 	private escape(str: string)
 	{
-		return str.split('').map(function (char)
+		var result = '';
+		for (var char of str)
 		{
-			if (/\w/.test(char))
-			{
-				return char;
-			}
-			else
-			{
-				return '\\' + char;
-			}
-		}).join('');
+			result += /\w/.test(char) ? char : ('\\' + char);
+		}
+
+		return result;
 	}
 
 
-	public literal(str: string, options: {})
+	public literal(str: string, options?: RuleOptions)
 	{
 		var hasOptions = typeof options === 'object' &&
 			Object.keys(options).length > 0 &&
 			str.length > 1;
-		if (hasOptions)
-		{
-			this.add('(?:');
-		}
 
-		this.add(this.escape(str));
+		this.add(hasOptions
+			? ('(?:' + this.escape(str) + ')')
+			: this.escape(str)
+		);
 
-		if (hasOptions)
-		{
-			this.add(')');
-		}
 		this.addOptions(options);
 
 		return this;
 	}
 
-	public alphanumeric(options: RuleOptions)
+	public alphanumeric(options?: RuleOptions)
 	{
 		this.add('\\w');
 		this.addOptions(options);
@@ -132,8 +113,7 @@ class Xeger
 		return this;
 	}
 
-
-	public number(options: RuleOptions)
+	public number(options?: RuleOptions)
 	{
 		this.add('\\d');
 		this.addOptions(options);
@@ -141,8 +121,7 @@ class Xeger
 		return this;
 	}
 
-
-	newline(options: RuleOptions)
+	newline(options?: RuleOptions)
 	{
 		this.add('\\n');
 		this.addOptions(options);
@@ -150,7 +129,7 @@ class Xeger
 		return this;
 	}
 
-	whitespace(options: RuleOptions)
+	whitespace(options?: RuleOptions)
 	{
 		this.add('\\s');
 		this.addOptions(options);
@@ -179,26 +158,26 @@ class Xeger
 		return this;
 	}
 
-	any(str: string|Function, options?: RuleOptions)
+	any(str: string|Function|RuleOptions, options?: RuleOptions)
 	{
-		if (typeof str === 'string')
+		switch (true)
 		{
-			this.add('[' + this.escape(str) + ']');
-		}
-		else if (typeof str === 'function')
-		{
-			var cb = str;
-			this.add('[');
-			cb.call(this, this);
-			this.add(']');
-		}
-		else
-		{
-			options = str;
-			this.add('.');
-		}
-		this.addOptions(options);
+			case typeof str === 'string':
+				this.add('[' + this.escape(<string>str) + ']');
+			break;
 
+			case typeof str === 'function':
+				this.add('[');
+				(<Function>str).call(this, this);
+				this.add(']');
+			break;
+
+			default:
+				options = str;
+				this.add('.');
+		}
+
+		this.addOptions(options);
 		return this;
 	}
 
@@ -206,7 +185,7 @@ class Xeger
 	{
 		if (typeof str === 'string')
 		{
-			this.add('[^' + this.escape(str) + ']');
+			this.add(`[^${this.escape(str)}]`);
 		}
 		else if (typeof str === 'function')
 		{

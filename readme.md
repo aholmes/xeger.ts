@@ -4,6 +4,8 @@ More expressive regular expressions for JavaScript.
 
 Pronounced "zeeger"
 
+You can find the original xeger [here](https://github.com/JonAbrams/xeger).
+
 [![Build Status](https://travis-ci.org/JonAbrams/xeger.svg)](https://travis-ci.org/JonAbrams/xeger)
 
 ## Install

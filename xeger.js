@@ -133,6 +133,12 @@ var Xeger = (function () {
     Xeger.prototype.regex = function () {
         return new RegExp(this.regexStr, this.flags);
     };
+    Xeger.prototype.toString = function () {
+        return "/" + this.regexStr + "/" + this.flags;
+    };
+    Xeger.prototype.valueOf = function () {
+        return this.regex();
+    };
     return Xeger;
 })();
 module.exports = function (cb, options) {

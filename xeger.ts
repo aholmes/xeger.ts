@@ -121,7 +121,7 @@ class Xeger
 		return this;
 	}
 
-	newline(options?: RuleOptions)
+	public newline(options?: RuleOptions)
 	{
 		this.add('\\n');
 		this.addOptions(options);
@@ -129,7 +129,7 @@ class Xeger
 		return this;
 	}
 
-	whitespace(options?: RuleOptions)
+	public whitespace(options?: RuleOptions)
 	{
 		this.add('\\s');
 		this.addOptions(options);
@@ -137,28 +137,28 @@ class Xeger
 		return this;
 	}
 
-	start()
+	public start()
 	{
 		this.add('^');
 
 		return this;
 	}
 
-	end()
+	public end()
 	{
 		this.add('$');
 
 		return this;
 	}
 
-	to()
+	public to()
 	{
 		this.add('-');
 
 		return this;
 	}
 
-	any(str: string|Function|RuleOptions, options?: RuleOptions)
+	public any(str: string|Function|RuleOptions, options?: RuleOptions)
 	{
 		switch (true)
 		{
@@ -181,7 +181,7 @@ class Xeger
 		return this;
 	}
 
-	not(str?: string|Function, options?: RuleOptions)
+	public not(str?: string|Function, options?: RuleOptions)
 	{
 		if (typeof str === 'string')
 		{
@@ -197,7 +197,7 @@ class Xeger
 		this.addOptions(options);
 	}
 
-	group(cb: Function, options?: GroupOptions)
+	public group(cb: Function, options?: GroupOptions)
 	{
 		this.add('(');
 		if (options && options.ignore)
@@ -211,9 +211,19 @@ class Xeger
 		return this;
 	}
 
-	regex()
+	public regex()
 	{
 		return new RegExp(this.regexStr, this.flags);
+	}
+
+	public toString()
+	{
+		return `/${this.regexStr}/${this.flags}`;
+	}
+
+	public valueOf()
+	{
+		return this.regex();
 	}
 }
 

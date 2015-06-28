@@ -216,6 +216,24 @@ xeger(function (x) {
 });  /* returns /(abc)(?:[123])/ */
 ```
 
+### x.backreference([string|number], [options])
+
+Add a backreference to the pattern. This will match previous patterns added with `group()`.
+
+When a number is passed, it is translated to a literal `\1`.
+
+When a string is passed, it will attempt to match previously added `group()` patterns and translate it to a number.
+
+```javascript
+xeger(function (x) {
+  x.group(function () {
+    x.literal('abc');
+  });
+  x.backreference(1);
+  x.backreference('(abc)')
+});  /* returns /(abc)\1\1/ */
+```
+
 ### Options
 
 You can pass in a few options to the above rule functions.

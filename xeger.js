@@ -2,6 +2,7 @@ var Xeger = (function () {
     function Xeger(cb, options) {
         this.regexStr = '';
         this.flags = '';
+        this.groups = [];
         options = options || {};
         if (options.multiline) {
             this.flags += 'm';
@@ -18,6 +19,7 @@ var Xeger = (function () {
     }
     Xeger.prototype.add = function (str) {
         this.regexStr += str;
+        return this;
     };
     Xeger.prototype.addOptions = function (options) {
         options = options || {};
@@ -40,6 +42,7 @@ var Xeger = (function () {
                 this.add("{" + from + "," + to + "}");
                 break;
         }
+        return this;
     };
     Xeger.prototype.escape = function (str) {
         var result = '';
@@ -53,43 +56,35 @@ var Xeger = (function () {
         var hasOptions = typeof options === 'object' &&
             Object.keys(options).length > 0 &&
             str.length > 1;
-        this.add(hasOptions
+        return this.add(hasOptions
             ? ('(?:' + this.escape(str) + ')')
-            : this.escape(str));
-        this.addOptions(options);
-        return this;
+            : this.escape(str))
+            .addOptions(options);
     };
     Xeger.prototype.alphanumeric = function (options) {
-        this.add('\\w');
-        this.addOptions(options);
-        return this;
+        return this.add('\\w')
+            .addOptions(options);
     };
     Xeger.prototype.number = function (options) {
-        this.add('\\d');
-        this.addOptions(options);
-        return this;
+        return this.add('\\d')
+            .addOptions(options);
     };
     Xeger.prototype.newline = function (options) {
-        this.add('\\n');
-        this.addOptions(options);
-        return this;
+        return this.add('\\n')
+            .addOptions(options);
     };
     Xeger.prototype.whitespace = function (options) {
-        this.add('\\s');
-        this.addOptions(options);
-        return this;
+        return this.add('\\s')
+            .addOptions(options);
     };
     Xeger.prototype.start = function () {
-        this.add('^');
-        return this;
+        return this.add('^');
     };
     Xeger.prototype.end = function () {
-        this.add('$');
-        return this;
+        return this.add('$');
     };
     Xeger.prototype.to = function () {
-        this.add('-');
-        return this;
+        return this.add('-');
     };
     Xeger.prototype.any = function (str, options) {
         switch (true) {
@@ -105,8 +100,7 @@ var Xeger = (function () {
                 options = str;
                 this.add('.');
         }
-        this.addOptions(options);
-        return this;
+        return this.addOptions(options);
     };
     Xeger.prototype.not = function (str, options) {
         if (typeof str === 'string') {
@@ -118,17 +112,23 @@ var Xeger = (function () {
             cb.call(this, this);
             this.add(']');
         }
-        this.addOptions(options);
+        return this.addOptions(options);
     };
     Xeger.prototype.group = function (cb, options) {
+        var startPosition = this.regexStr.length;
         this.add('(');
         if (options && options.ignore) {
             this.add('?:');
         }
         cb.call(this, this);
         this.add(')');
-        this.addOptions(options);
-        return this;
+        this.groups.push(this.regexStr.substring(startPosition));
+        return this.addOptions(options);
+    };
+    Xeger.prototype.backreference = function (group, options) {
+        return typeof group === 'string'
+            ? this.add("\\" + (this.groups.indexOf(group) + 1))
+            : this.add("\\" + group);
     };
     Xeger.prototype.regex = function () {
         return new RegExp(this.regexStr, this.flags);

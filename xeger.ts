@@ -24,6 +24,8 @@ class Xeger
 	public regexStr = '';
 	public flags = '';
 
+	private groups: string[] = [];
+
 	constructor(cb?: (xeger: Xeger) => void, options?: ConstructorOptions)
 	{
 		options = options || {};
@@ -49,6 +51,8 @@ class Xeger
 	private add(str: string)
 	{
 		this.regexStr += str;
+		
+		return this;
 	}
 
 	private addOptions(options?: RuleOptions)
@@ -60,21 +64,27 @@ class Xeger
 			case options.multiple && options.optional:
 				this.add('*');
 			break;
+			
 			case options.multiple:
 				this.add('+');
 			break;
+			
 			case options.optional:
 				this.add('?');
 			break;
+			
 			case typeof options.repeat === 'number':
 				this.add('{' + options.repeat + '}');
 			break;
+			
 			case typeof options.from === 'number' || typeof options.to === 'number':
 				var from = typeof options.from === 'number' && options.from || '';
 				var to   = typeof options.to   === 'number' && options.to   || '';
 				this.add(`{${from},${to}}`);
 			break;
 		}
+		
+		return this;
 	}
 
 	private escape(str: string)
@@ -95,67 +105,50 @@ class Xeger
 			Object.keys(options).length > 0 &&
 			str.length > 1;
 
-		this.add(hasOptions
+		return this.add(hasOptions
 			? ('(?:' + this.escape(str) + ')')
 			: this.escape(str)
-		);
-
-		this.addOptions(options);
-
-		return this;
+		)
+		.addOptions(options);
 	}
 
 	public alphanumeric(options?: RuleOptions)
 	{
-		this.add('\\w');
-		this.addOptions(options);
-
-		return this;
+		return this.add('\\w')
+			.addOptions(options);
 	}
 
 	public number(options?: RuleOptions)
 	{
-		this.add('\\d');
-		this.addOptions(options);
-
-		return this;
+		return this.add('\\d')
+			.addOptions(options);
 	}
 
 	public newline(options?: RuleOptions)
 	{
-		this.add('\\n');
-		this.addOptions(options);
-
-		return this;
+		return this.add('\\n')
+			.addOptions(options);
 	}
 
 	public whitespace(options?: RuleOptions)
 	{
-		this.add('\\s');
-		this.addOptions(options);
-
-		return this;
+		return this.add('\\s')
+			.addOptions(options);
 	}
 
 	public start()
 	{
-		this.add('^');
-
-		return this;
+		return this.add('^');
 	}
 
 	public end()
 	{
-		this.add('$');
-
-		return this;
+		return this.add('$');
 	}
 
 	public to()
 	{
-		this.add('-');
-
-		return this;
+		return this.add('-');
 	}
 
 	public any(str: string|Function|RuleOptions, options?: RuleOptions)
@@ -177,8 +170,7 @@ class Xeger
 				this.add('.');
 		}
 
-		this.addOptions(options);
-		return this;
+		return this.addOptions(options);
 	}
 
 	public not(str?: string|Function, options?: RuleOptions)
@@ -194,11 +186,14 @@ class Xeger
 			cb.call(this, this);
 			this.add(']');
 		}
-		this.addOptions(options);
+		
+		return this.addOptions(options);
 	}
 
 	public group(cb: Function, options?: GroupOptions)
 	{
+		var startPosition = this.regexStr.length;
+		
 		this.add('(');
 		if (options && options.ignore)
 		{
@@ -206,9 +201,17 @@ class Xeger
 		}
 		cb.call(this, this);
 		this.add(')');
-		this.addOptions(options);
 
-		return this;
+		this.groups.push(this.regexStr.substring(startPosition));
+		
+		return this.addOptions(options);
+	}
+	
+	public backreference(group: string|number, options?: RuleOptions)
+	{
+		return typeof group === 'string'
+			? this.add(`\\${this.groups.indexOf(group) + 1}`)
+			: this.add(`\\${group}`);
 	}
 
 	public regex()

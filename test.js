@@ -126,6 +126,24 @@ describe('xeger', function () {
 		});
 	});
 
+	describe('backreference', function () {
+		var regex = xeger(function (r) {
+			r.group(function () {
+				this.literal('abc');
+			})
+			.literal('abc')
+			.backreference(1)
+			.backreference('(abc)');
+		});
+
+		it('matches a numbered capture group', function () {
+			assert.equal(regex.toString(), '/(abc)abc\\1\\1/');
+			assert.equal(regex.valueOf().test('abcabc'), false);
+			assert.equal(regex.valueOf().test('abcabcabc'), false);
+			assert.equal(regex.valueOf().test('abcabcabcabc'), true);
+		});
+	});
+
 	describe('callback context', function () {
 		var regex = xeger(function () {
 			this.literal('hi');
